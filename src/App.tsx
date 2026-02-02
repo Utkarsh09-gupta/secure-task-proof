@@ -6,9 +6,13 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAppStore } from "./lib/store";
 import LandingPage from "./pages/LandingPage";
 import AuthPage from "./pages/AuthPage";
-import ProjectSetup from "./pages/ProjectSetup";
-import SubmitEvidence from "./pages/SubmitEvidence";
-import ClientReview from "./pages/ClientReview";
+import FreelancerDashboard from "./pages/FreelancerDashboard";
+import ClientDashboard from "./pages/ClientDashboard";
+import TaskDetail from "./pages/TaskDetail";
+import TaskReview from "./pages/TaskReview";
+import ProofWallet from "./pages/ProofWallet";
+import Profile from "./pages/Profile";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,26 +35,58 @@ const App = () => (
           <Route path="/" element={<LandingPage />} />
           <Route path="/auth" element={<AuthPage />} />
           <Route
-            path="/project-setup"
+            path="/dashboard"
             element={
               <ProtectedRoute>
-                <ProjectSetup />
+                <FreelancerDashboard />
               </ProtectedRoute>
             }
           />
           <Route
-            path="/submit-evidence"
+            path="/dashboard/client"
             element={
               <ProtectedRoute>
-                <SubmitEvidence />
+                <ClientDashboard />
               </ProtectedRoute>
             }
           />
           <Route
-            path="/client-review"
+            path="/task/:taskId"
             element={
               <ProtectedRoute>
-                <ClientReview />
+                <TaskDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/task/:taskId/review"
+            element={
+              <ProtectedRoute>
+                <TaskReview />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/proof-wallet"
+            element={
+              <ProtectedRoute>
+                <ProofWallet />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminDashboard />
               </ProtectedRoute>
             }
           />

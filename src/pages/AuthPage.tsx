@@ -1,13 +1,14 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Shield, ArrowRight, User, Briefcase } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Sparkles, ArrowRight, User, Briefcase, GraduationCap } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
 import { UserRole } from '@/lib/types';
 
 const AuthPage = () => {
-  const [isLogin, setIsLogin] = useState(true);
+  const [searchParams] = useSearchParams();
+  const [isLogin, setIsLogin] = useState(searchParams.get('mode') !== 'signup');
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('demo@proofpay.com');
+  const [email, setEmail] = useState('demo@nexa.app');
   const [password, setPassword] = useState('demo123');
   const [role, setRole] = useState<UserRole>('freelancer');
   const navigate = useNavigate();
@@ -16,8 +17,22 @@ const AuthPage = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     login(email, password, role, name || undefined);
-    navigate(role === 'freelancer' ? '/project-setup' : '/client-review');
+    
+    // Navigate based on role
+    if (role === 'client') {
+      navigate('/dashboard/client');
+    } else if (role === 'admin') {
+      navigate('/admin');
+    } else {
+      navigate('/dashboard');
+    }
   };
+
+  const roles = [
+    { value: 'client' as const, label: 'Client', icon: Briefcase, description: 'Post tasks and hire' },
+    { value: 'freelancer' as const, label: 'Freelancer', icon: User, description: 'Work and build proof' },
+    { value: 'student' as const, label: 'Student', icon: GraduationCap, description: 'Campus Proof Program' },
+  ];
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -25,20 +40,20 @@ const AuthPage = () => {
         {/* Logo & Branding */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary mb-4">
-            <Shield className="w-7 h-7 text-primary-foreground" />
+            <Sparkles className="w-7 h-7 text-primary-foreground" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground">ContractIQ ProofPay</h1>
-          <p className="text-muted-foreground mt-2">Lock expectations. Protect payments.</p>
+          <h1 className="text-2xl font-bold text-foreground">Nexa</h1>
+          <p className="text-muted-foreground mt-2">Turn work into verified proof.</p>
         </div>
 
         {/* Auth Card */}
-        <div className="card-elevated p-8">
+        <div className="card-nexa p-8">
           {/* Toggle */}
-          <div className="flex bg-secondary rounded-lg p-1 mb-6">
+          <div className="flex bg-secondary rounded-xl p-1 mb-6">
             <button
               type="button"
               onClick={() => setIsLogin(true)}
-              className={`flex-1 py-2.5 text-sm font-medium rounded-md transition-all duration-200 ${
+              className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${
                 isLogin 
                   ? 'bg-card text-foreground shadow-soft' 
                   : 'text-muted-foreground hover:text-foreground'
@@ -49,7 +64,7 @@ const AuthPage = () => {
             <button
               type="button"
               onClick={() => setIsLogin(false)}
-              className={`flex-1 py-2.5 text-sm font-medium rounded-md transition-all duration-200 ${
+              className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${
                 !isLogin 
                   ? 'bg-card text-foreground shadow-soft' 
                   : 'text-muted-foreground hover:text-foreground'
@@ -62,21 +77,21 @@ const AuthPage = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1.5">
+                <label className="block text-sm font-semibold text-foreground mb-1.5">
                   Full Name
                 </label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Alex Johnson"
-                  className="input-field w-full"
+                  placeholder="Alex Chen"
+                  className="input-nexa w-full"
                 />
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1.5">
+              <label className="block text-sm font-semibold text-foreground mb-1.5">
                 Email
               </label>
               <input
@@ -84,13 +99,13 @@ const AuthPage = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="input-field w-full"
+                className="input-nexa w-full"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1.5">
+              <label className="block text-sm font-semibold text-foreground mb-1.5">
                 Password
               </label>
               <input
@@ -98,81 +113,60 @@ const AuthPage = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="input-field w-full"
+                className="input-nexa w-full"
                 required
               />
             </div>
 
             {/* Role Selector */}
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
+              <label className="block text-sm font-semibold text-foreground mb-2">
                 I am a
               </label>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setRole('freelancer')}
-                  className={`flex items-center gap-3 p-4 rounded-lg border-2 transition-all duration-200 ${
-                    role === 'freelancer'
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:border-muted-foreground/30'
-                  }`}
-                >
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                    role === 'freelancer' ? 'bg-primary/10' : 'bg-secondary'
-                  }`}>
-                    <User className={`w-5 h-5 ${
-                      role === 'freelancer' ? 'text-primary' : 'text-muted-foreground'
-                    }`} />
-                  </div>
-                  <div className="text-left">
-                    <p className={`font-medium text-sm ${
-                      role === 'freelancer' ? 'text-foreground' : 'text-muted-foreground'
+              <div className="space-y-2">
+                {roles.map((r) => (
+                  <button
+                    key={r.value}
+                    type="button"
+                    onClick={() => setRole(r.value)}
+                    className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all duration-200 ${
+                      role === r.value
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-muted-foreground/30'
+                    }`}
+                  >
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                      role === r.value ? 'bg-primary/10' : 'bg-secondary'
                     }`}>
-                      Freelancer
-                    </p>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setRole('client')}
-                  className={`flex items-center gap-3 p-4 rounded-lg border-2 transition-all duration-200 ${
-                    role === 'client'
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:border-muted-foreground/30'
-                  }`}
-                >
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                    role === 'client' ? 'bg-primary/10' : 'bg-secondary'
-                  }`}>
-                    <Briefcase className={`w-5 h-5 ${
-                      role === 'client' ? 'text-primary' : 'text-muted-foreground'
-                    }`} />
-                  </div>
-                  <div className="text-left">
-                    <p className={`font-medium text-sm ${
-                      role === 'client' ? 'text-foreground' : 'text-muted-foreground'
-                    }`}>
-                      Client
-                    </p>
-                  </div>
-                </button>
+                      <r.icon className={`w-5 h-5 ${
+                        role === r.value ? 'text-primary' : 'text-muted-foreground'
+                      }`} />
+                    </div>
+                    <div className="text-left">
+                      <p className={`font-semibold text-sm ${
+                        role === r.value ? 'text-foreground' : 'text-muted-foreground'
+                      }`}>
+                        {r.label}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{r.description}</p>
+                    </div>
+                  </button>
+                ))}
               </div>
             </div>
 
             <button
               type="submit"
-              className="w-full btn-gradient py-3 rounded-lg flex items-center justify-center gap-2 mt-6"
+              className="w-full btn-primary py-3.5 rounded-xl flex items-center justify-center gap-2 mt-6"
             >
-              Continue (Demo)
+              {isLogin ? 'Login' : 'Create Account'}
               <ArrowRight className="w-4 h-4" />
             </button>
           </form>
         </div>
 
         <p className="text-center text-xs text-muted-foreground mt-6">
-          Demo mode — no real authentication required
+          Demo mode — use any email and password
         </p>
       </div>
     </div>
