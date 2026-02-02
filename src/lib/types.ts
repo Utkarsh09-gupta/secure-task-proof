@@ -1,43 +1,58 @@
-export type UserRole = 'freelancer' | 'client';
+export type UserRole = 'client' | 'freelancer' | 'student' | 'admin';
 
 export interface User {
   id: string;
   name: string;
   email: string;
   role: UserRole;
+  skills?: string[];
+  completedTasks?: number;
+  paymentBehavior?: 'on-time' | 'delayed';
 }
 
-export interface AcceptanceCriterion {
+export interface Deliverable {
   id: string;
-  text: string;
-  evidenceUrl?: string;
-  evidenceType?: 'file' | 'link';
-  status: 'pending' | 'submitted';
+  title: string;
+  completed: boolean;
 }
 
 export interface Milestone {
   id: string;
   title: string;
   amount: number;
-  criteria: AcceptanceCriterion[];
-  status: 'awaiting_agreement' | 'in_progress' | 'submitted' | 'approved' | 'disputed';
+  deliverables: Deliverable[];
+  status: 'pending' | 'in_progress' | 'submitted' | 'approved' | 'revision_requested';
+  revisionCount: number;
+  submissionUrl?: string;
+  submissionNote?: string;
 }
 
-export interface Project {
+export interface Task {
   id: string;
-  name: string;
+  title: string;
+  description: string;
+  totalAmount: number;
   clientId: string;
-  freelancerId: string;
+  assigneeId?: string;
+  assigneeRole?: 'freelancer' | 'student';
   milestones: Milestone[];
-  status: 'draft' | 'active' | 'completed';
+  status: 'draft' | 'posted' | 'accepted' | 'in_progress' | 'completed';
+  paymentStatus: 'pending' | 'paid';
   createdAt: Date;
+  contractLocked: boolean;
 }
 
-export interface Invoice {
+export interface ProofCard {
   id: string;
-  projectId: string;
-  milestoneId: string;
-  amount: number;
-  status: 'pending' | 'approved' | 'disputed';
-  createdAt: Date;
+  taskId: string;
+  taskTitle: string;
+  milestoneTitle: string;
+  userRole: 'freelancer' | 'student';
+  workSummary: string;
+  evidenceUrl: string;
+  clientApproval: boolean;
+  clientName: string;
+  timestamp: Date;
+  verified: boolean;
+  publicLink: string;
 }
