@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Sparkles, ArrowRight, User, Briefcase, GraduationCap } from 'lucide-react';
+import { Sparkles, ArrowRight, User, Briefcase } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
-import { UserRole } from '@/lib/types';
+import { UserRole, ServiceCategory, ClientType, SERVICE_CATEGORIES, CLIENT_TYPES } from '@/lib/types';
 
 const AuthPage = () => {
   const [searchParams] = useSearchParams();
@@ -11,14 +11,22 @@ const AuthPage = () => {
   const [email, setEmail] = useState('demo@nexa.app');
   const [password, setPassword] = useState('demo123');
   const [role, setRole] = useState<UserRole>('freelancer');
+  const [selectedServices, setSelectedServices] = useState<ServiceCategory[]>([]);
+  const [selectedClientType, setSelectedClientType] = useState<ClientType>('individual-client');
   const navigate = useNavigate();
   const login = useAppStore((state) => state.login);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    login(email, password, role, name || undefined);
+    login(
+      email, 
+      password, 
+      role, 
+      name || undefined, 
+      role === 'freelancer' ? (selectedServices.length > 0 ? selectedServices : undefined) : undefined,
+      role === 'client' ? selectedClientType : undefined
+    );
     
-    // Navigate based on role
     if (role === 'client') {
       navigate('/dashboard/client');
     } else if (role === 'admin') {
@@ -28,11 +36,24 @@ const AuthPage = () => {
     }
   };
 
+  const toggleService = (service: ServiceCategory) => {
+    setSelectedServices(prev => 
+      prev.includes(service) 
+        ? prev.filter(s => s !== service)
+        : [...prev, service]
+    );
+  };
+
   const roles = [
-    { value: 'client' as const, label: 'Client', icon: Briefcase, description: 'Post tasks and hire' },
-    { value: 'freelancer' as const, label: 'Freelancer', icon: User, description: 'Work and build proof' },
-    { value: 'student' as const, label: 'Student', icon: GraduationCap, description: 'Campus Proof Program' },
+    { value: 'client' as const, label: 'Client', icon: Briefcase, description: 'Post tasks and hire freelancers' },
+    { value: 'freelancer' as const, label: 'Freelancer', icon: User, description: 'Work and build verified proof' },
   ];
+
+  const serviceGroups = Object.entries(SERVICE_CATEGORIES).reduce((acc, [key, value]) => {
+    if (!acc[value.group]) acc[value.group] = [];
+    acc[value.group].push({ key: key as ServiceCategory, label: value.label });
+    return acc;
+  }, {} as Record<string, { key: ServiceCategory; label: string }[]>);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -154,6 +175,56 @@ const AuthPage = () => {
                 ))}
               </div>
             </div>
+
+            {/* Freelancer Service Categories */}
+            {!isLogin && role === 'freelancer' && (
+              <div>
+                <label className="block text-sm font-semibold text-foreground mb-2">
+                  Select Your Services
+                </label>
+                <div className="max-h-48 overflow-y-auto space-y-3 border border-border rounded-xl p-3">
+                  {Object.entries(serviceGroups).map(([group, services]) => (
+                    <div key={group}>
+                      <p className="text-xs font-semibold text-muted-foreground mb-1.5">{group}</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {services.map((service) => (
+                          <button
+                            key={service.key}
+                            type="button"
+                            onClick={() => toggleService(service.key)}
+                            className={`px-2.5 py-1 text-xs rounded-full transition-all ${
+                              selectedServices.includes(service.key)
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
+                            }`}
+                          >
+                            {service.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Client Type Selector */}
+            {!isLogin && role === 'client' && (
+              <div>
+                <label className="block text-sm font-semibold text-foreground mb-2">
+                  I am a
+                </label>
+                <select
+                  value={selectedClientType}
+                  onChange={(e) => setSelectedClientType(e.target.value as ClientType)}
+                  className="input-nexa w-full"
+                >
+                  {Object.entries(CLIENT_TYPES).map(([key, label]) => (
+                    <option key={key} value={key}>{label}</option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <button
               type="submit"

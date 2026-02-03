@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { User, Task, ProofCard, UserRole } from './types';
+import { User, Task, ProofCard, UserRole, ServiceCategory, ClientType } from './types';
 
 interface AppState {
   user: User | null;
@@ -8,12 +8,12 @@ interface AppState {
   allUsers: User[];
   
   setUser: (user: User | null) => void;
-  login: (email: string, password: string, role: UserRole, name?: string) => void;
+  login: (email: string, password: string, role: UserRole, name?: string, serviceCategories?: ServiceCategory[], clientType?: ClientType) => void;
   logout: () => void;
   
   addTask: (task: Task) => void;
   updateTask: (taskId: string, updates: Partial<Task>) => void;
-  acceptTask: (taskId: string, assigneeId: string, assigneeRole: 'freelancer' | 'student') => void;
+  acceptTask: (taskId: string, assigneeId: string) => void;
   submitMilestone: (taskId: string, milestoneId: string, url: string, note: string) => void;
   approveMilestone: (taskId: string, milestoneId: string) => void;
   requestRevision: (taskId: string, milestoneId: string) => void;
@@ -22,11 +22,59 @@ interface AppState {
   getProofCardsForUser: (userId: string) => ProofCard[];
 }
 
-// Demo users
+// Demo users - professional freelancers and clients
 const demoUsers: User[] = [
-  { id: 'client-001', name: 'Sarah Mitchell', email: 'sarah@company.com', role: 'client', completedTasks: 12, paymentBehavior: 'on-time' },
-  { id: 'freelancer-001', name: 'Alex Chen', email: 'alex@email.com', role: 'freelancer', skills: ['React', 'Node.js', 'UI/UX'] },
-  { id: 'student-001', name: 'Priya Sharma', email: 'priya@university.edu', role: 'student', skills: ['Research', 'Writing', 'PowerPoint'] },
+  { 
+    id: 'client-001', 
+    name: 'Sarah Mitchell', 
+    email: 'sarah@techstartup.com', 
+    role: 'client', 
+    clientType: 'startup-founder',
+    completedTasks: 12, 
+    paymentBehavior: 'on-time' 
+  },
+  { 
+    id: 'client-002', 
+    name: 'Raj Kapoor', 
+    email: 'raj@digitalagency.com', 
+    role: 'client', 
+    clientType: 'agency-owner',
+    completedTasks: 28, 
+    paymentBehavior: 'on-time' 
+  },
+  { 
+    id: 'client-003', 
+    name: 'Emily Chen', 
+    email: 'emily@growthco.com', 
+    role: 'client', 
+    clientType: 'marketing-manager',
+    completedTasks: 8, 
+    paymentBehavior: 'delayed' 
+  },
+  { 
+    id: 'freelancer-001', 
+    name: 'Alex Chen', 
+    email: 'alex@email.com', 
+    role: 'freelancer', 
+    serviceCategories: ['frontend-developer', 'ui-ux-designer'],
+    skills: ['React', 'TypeScript', 'Figma', 'Tailwind CSS'] 
+  },
+  { 
+    id: 'freelancer-002', 
+    name: 'Priya Sharma', 
+    email: 'priya@email.com', 
+    role: 'freelancer', 
+    serviceCategories: ['video-editor', 'reel-editor'],
+    skills: ['Premiere Pro', 'After Effects', 'DaVinci Resolve'] 
+  },
+  { 
+    id: 'freelancer-003', 
+    name: 'Marcus Johnson', 
+    email: 'marcus@email.com', 
+    role: 'freelancer', 
+    serviceCategories: ['fullstack-developer', 'backend-developer'],
+    skills: ['Node.js', 'Python', 'PostgreSQL', 'AWS'] 
+  },
 ];
 
 // Demo task
@@ -106,14 +154,22 @@ export const useAppStore = create<AppState>((set, get) => ({
   
   setUser: (user) => set({ user }),
   
-  login: (email, password, role, name) => {
+  login: (email, password, role, name, serviceCategories, clientType) => {
     const existingUser = demoUsers.find(u => u.role === role);
     const user: User = {
       id: existingUser?.id || `${role}-${Date.now()}`,
       name: name || existingUser?.name || 'Demo User',
       email,
       role,
-      skills: role === 'freelancer' ? ['React', 'Node.js', 'UI/UX'] : role === 'student' ? ['Research', 'Writing'] : undefined,
+      serviceCategories: role === 'freelancer' 
+        ? (serviceCategories || existingUser?.serviceCategories || ['frontend-developer']) 
+        : undefined,
+      skills: role === 'freelancer' 
+        ? (existingUser?.skills || ['React', 'TypeScript']) 
+        : undefined,
+      clientType: role === 'client' 
+        ? (clientType || existingUser?.clientType || 'individual-client') 
+        : undefined,
       completedTasks: role === 'client' ? 12 : undefined,
       paymentBehavior: role === 'client' ? 'on-time' : undefined,
     };
@@ -128,10 +184,10 @@ export const useAppStore = create<AppState>((set, get) => ({
     tasks: state.tasks.map((t) => t.id === taskId ? { ...t, ...updates } : t),
   })),
   
-  acceptTask: (taskId, assigneeId, assigneeRole) => set((state) => ({
+  acceptTask: (taskId, assigneeId) => set((state) => ({
     tasks: state.tasks.map((t) => 
       t.id === taskId 
-        ? { ...t, assigneeId, assigneeRole, status: 'accepted' as const, contractLocked: true }
+        ? { ...t, assigneeId, assigneeRole: 'freelancer' as const, status: 'accepted' as const, contractLocked: true }
         : t
     ),
   })),
@@ -157,13 +213,12 @@ export const useAppStore = create<AppState>((set, get) => ({
     const milestone = task?.milestones.find(m => m.id === milestoneId);
     
     if (task && milestone) {
-      // Create proof card
       const proofCard: ProofCard = {
         id: `proof-${Date.now()}`,
         taskId,
         taskTitle: task.title,
         milestoneTitle: milestone.title,
-        userRole: task.assigneeRole || 'freelancer',
+        userRole: 'freelancer',
         workSummary: milestone.submissionNote || 'Work completed successfully',
         evidenceUrl: milestone.submissionUrl || '',
         clientApproval: true,
