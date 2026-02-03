@@ -1,14 +1,33 @@
 import { Link } from 'react-router-dom';
 import { 
-  User, 
   CheckCircle2, 
   Award,
   Clock,
   Wallet,
-  ExternalLink
+  ExternalLink,
+  Briefcase,
+  Code,
+  Palette,
+  Video,
+  FileText
 } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
+import { SERVICE_CATEGORIES, CLIENT_TYPES } from '@/lib/types';
 import DashboardLayout from '@/components/DashboardLayout';
+
+const getServiceIcon = (group: string) => {
+  switch (group) {
+    case 'Web Development':
+    case 'App Development':
+      return Code;
+    case 'Design & Creative':
+      return Palette;
+    case 'Editing & Media':
+      return Video;
+    default:
+      return FileText;
+  }
+};
 
 const Profile = () => {
   const { user, tasks, proofCards } = useAppStore();
@@ -28,6 +47,14 @@ const Profile = () => {
     return task?.assigneeId === user.id;
   });
 
+  // Group services by category for freelancers
+  const groupedServices = user.serviceCategories?.reduce((acc, category) => {
+    const service = SERVICE_CATEGORIES[category];
+    if (!acc[service.group]) acc[service.group] = [];
+    acc[service.group].push(service.label);
+    return acc;
+  }, {} as Record<string, string[]>) || {};
+
   return (
     <DashboardLayout>
       <div className="max-w-3xl mx-auto animate-fade-in">
@@ -45,16 +72,59 @@ const Profile = () => {
                   Verified on Nexa
                 </span>
               </div>
-              <p className="text-muted-foreground capitalize mb-4">{user.role}</p>
               
-              {/* Skills for Freelancer/Student */}
-              {user.skills && (
-                <div className="flex flex-wrap gap-2">
-                  {user.skills.map((skill) => (
-                    <span key={skill} className="px-3 py-1.5 rounded-full bg-secondary text-sm font-medium text-muted-foreground">
-                      {skill}
+              {/* Role Badge */}
+              <div className="flex items-center gap-2 mb-4">
+                {isClient ? (
+                  <>
+                    <Briefcase className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">
+                      {user.clientType ? CLIENT_TYPES[user.clientType] : 'Client'}
                     </span>
-                  ))}
+                  </>
+                ) : (
+                  <span className="text-muted-foreground capitalize">Freelancer</span>
+                )}
+              </div>
+              
+              {/* Service Categories for Freelancer */}
+              {!isClient && Object.keys(groupedServices).length > 0 && (
+                <div className="space-y-3">
+                  {Object.entries(groupedServices).map(([group, services]) => {
+                    const Icon = getServiceIcon(group);
+                    return (
+                      <div key={group}>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1.5">
+                          <Icon className="w-3.5 h-3.5" />
+                          {group}
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {services.map((service) => (
+                            <span 
+                              key={service} 
+                              className="px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium"
+                            >
+                              {service}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Skills for Freelancer */}
+              {user.skills && (
+                <div className="mt-4">
+                  <p className="text-xs text-muted-foreground mb-2">Skills</p>
+                  <div className="flex flex-wrap gap-2">
+                    {user.skills.map((skill) => (
+                      <span key={skill} className="px-3 py-1.5 rounded-full bg-secondary text-sm font-medium text-muted-foreground">
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               )}
 
@@ -63,11 +133,13 @@ const Profile = () => {
                 <div className="flex items-center gap-4 mt-2">
                   <div className="flex items-center gap-2 text-sm">
                     <Award className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-muted-foreground">{user.completedTasks || completedTasks} tasks completed</span>
+                    <span className="text-muted-foreground">{user.completedTasks || completedTasks} projects completed</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
-                    <Clock className="w-4 h-4 text-success" />
-                    <span className="text-success font-medium">On-time approvals</span>
+                    <Clock className={`w-4 h-4 ${user.paymentBehavior === 'on-time' ? 'text-success' : 'text-warning'}`} />
+                    <span className={`font-medium ${user.paymentBehavior === 'on-time' ? 'text-success' : 'text-warning'}`}>
+                      {user.paymentBehavior === 'on-time' ? 'On-time approvals' : 'Occasional delays'}
+                    </span>
                   </div>
                 </div>
               )}
@@ -93,13 +165,15 @@ const Profile = () => {
           )}
           {isClient && (
             <div className="card-nexa p-5 text-center">
-              <p className="text-2xl font-bold text-success">100%</p>
+              <p className="text-2xl font-bold text-success">
+                {user.paymentBehavior === 'on-time' ? '100%' : '85%'}
+              </p>
               <p className="text-sm text-muted-foreground">On-time Rate</p>
             </div>
           )}
         </div>
 
-        {/* Proof Wallet Preview (for Freelancer/Student) */}
+        {/* Proof Wallet Preview (for Freelancer) */}
         {!isClient && (
           <div>
             <div className="flex items-center justify-between mb-4">

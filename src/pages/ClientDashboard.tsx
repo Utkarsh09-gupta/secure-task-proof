@@ -1,18 +1,18 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { 
   Plus, 
   FileText, 
   Clock, 
   CheckCircle2, 
-  Users,
   IndianRupee,
-  ArrowRight,
   Eye
 } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
 import DashboardLayout from '@/components/DashboardLayout';
 import CreateTaskModal from '@/components/CreateTaskModal';
+import NexaAssistant from '@/components/NexaAssistant';
+import { Task } from '@/lib/types';
 
 const ClientDashboard = () => {
   const { user, tasks, allUsers } = useAppStore();
@@ -120,6 +120,8 @@ const ClientDashboard = () => {
       {showCreateModal && (
         <CreateTaskModal onClose={() => setShowCreateModal(false)} />
       )}
+
+      <NexaAssistant />
     </DashboardLayout>
   );
 };
@@ -148,8 +150,6 @@ const StatCard = ({ icon: Icon, label, value, color }: StatCardProps) => {
     </div>
   );
 };
-
-import { Task } from '@/lib/types';
 
 interface ReviewTaskCardProps {
   task: Task;

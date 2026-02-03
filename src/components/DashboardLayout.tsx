@@ -21,16 +21,21 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { user, logout } = useAppStore();
 
   const isClient = user?.role === 'client';
+  const isFreelancer = user?.role === 'freelancer';
 
   const navItems = isClient
     ? [
         { path: '/dashboard/client', label: 'Dashboard', icon: LayoutDashboard },
         { path: '/profile', label: 'Profile', icon: User },
       ]
-    : [
+    : isFreelancer
+    ? [
         { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { path: '/proof-wallet', label: 'Proof Wallet', icon: Wallet },
         { path: '/profile', label: 'Profile', icon: User },
+      ]
+    : [
+        { path: '/admin', label: 'Admin', icon: LayoutDashboard },
       ];
 
   const handleLogout = () => {

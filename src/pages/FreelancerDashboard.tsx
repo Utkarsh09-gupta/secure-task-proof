@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   FileText, 
@@ -12,6 +11,8 @@ import {
 } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
 import DashboardLayout from '@/components/DashboardLayout';
+import NexaAssistant from '@/components/NexaAssistant';
+import { Task, ProofCard } from '@/lib/types';
 
 const FreelancerDashboard = () => {
   const { user, tasks, proofCards } = useAppStore();
@@ -32,10 +33,7 @@ const FreelancerDashboard = () => {
             Welcome back, {user?.name?.split(' ')[0]}!
           </h1>
           <p className="text-muted-foreground">
-            {user?.role === 'student' 
-              ? 'Campus Proof Program • Build your verified credentials'
-              : 'Manage your tasks and build verified proof of work'
-            }
+            Manage your tasks and build verified proof of work
           </p>
         </div>
 
@@ -118,6 +116,8 @@ const FreelancerDashboard = () => {
           )}
         </div>
       </div>
+
+      <NexaAssistant />
     </DashboardLayout>
   );
 };
@@ -146,8 +146,6 @@ const StatCard = ({ icon: Icon, label, value, color }: StatCardProps) => {
     </div>
   );
 };
-
-import { Task, ProofCard } from '@/lib/types';
 
 interface TaskCardProps {
   task: Task;

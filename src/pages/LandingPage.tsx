@@ -7,7 +7,6 @@ import {
   CheckCircle2, 
   Award,
   Users,
-  GraduationCap,
   Briefcase,
   Shield,
   ExternalLink,
@@ -58,7 +57,7 @@ const LandingPage = () => {
             <span className="gradient-text">verified proof.</span>
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10">
-            Nexa helps freelancers and students convert completed work into trusted, 
+            Nexa helps freelancers convert completed work into trusted, 
             shareable proof. Replace resumes with real outcomes.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -125,16 +124,11 @@ const LandingPage = () => {
             <h2 className="text-3xl font-bold text-foreground mb-4">Who Nexa Is For</h2>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
             <PersonaCard
               icon={Users}
               title="Freelancers"
               description="Build a verified portfolio of completed work. Share proof instead of promises."
-            />
-            <PersonaCard
-              icon={GraduationCap}
-              title="Students"
-              description="Join the Campus Proof Program. Convert assignments and projects into verified credentials."
             />
             <PersonaCard
               icon={Briefcase}
@@ -188,7 +182,7 @@ const LandingPage = () => {
             Start Building Your Proof Today
           </h2>
           <p className="text-lg text-muted-foreground mb-10 max-w-xl mx-auto">
-            Join thousands of freelancers and students who trust Nexa to verify their work.
+            Join thousands of freelancers who trust Nexa to verify their work.
           </p>
           <Link
             to="/auth?mode=signup"
