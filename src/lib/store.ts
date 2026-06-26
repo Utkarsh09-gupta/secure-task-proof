@@ -36,6 +36,8 @@ const getAuthHeaders = () => {
   };
 };
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 export const useAppStore = create<AppState>((set, get) => ({
   user: null,
   tasks: [],
@@ -51,7 +53,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     set({ isLoading: true });
     try {
-      const response = await fetch('/api/auth/me', {
+      const response = await fetch(`${API_BASE}/api/auth/me`, {
         headers: getAuthHeaders()
       });
       if (response.ok) {
@@ -106,7 +108,7 @@ export const useAppStore = create<AppState>((set, get) => ({
           ? Array.from(new Set(serviceCategories.flatMap(cat => defaultSkillsMap[cat] || [])))
           : ['React', 'TypeScript'];
 
-        response = await fetch('/api/auth/register', {
+        response = await fetch(`${API_BASE}/api/auth/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -120,7 +122,7 @@ export const useAppStore = create<AppState>((set, get) => ({
           })
         });
       } else {
-        response = await fetch('/api/auth/login', {
+        response = await fetch(`${API_BASE}/api/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password })
@@ -161,7 +163,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   fetchTasks: async () => {
     try {
-      const response = await fetch('/api/tasks', {
+      const response = await fetch(`${API_BASE}/api/tasks`, {
         headers: getAuthHeaders()
       });
       if (response.ok) {
@@ -180,7 +182,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   
   addTask: async (taskData) => {
     try {
-      const response = await fetch('/api/tasks', {
+      const response = await fetch(`${API_BASE}/api/tasks`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify(taskData)
@@ -203,7 +205,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   
   updateTask: async (taskId, updates) => {
     try {
-      const response = await fetch(`/api/tasks/${taskId}`, {
+      const response = await fetch(`${API_BASE}/api/tasks/${taskId}`, {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify(updates)
@@ -226,7 +228,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   
   acceptTask: async (taskId, assigneeId) => {
     try {
-      const response = await fetch(`/api/tasks/${taskId}/accept`, {
+      const response = await fetch(`${API_BASE}/api/tasks/${taskId}/accept`, {
         method: 'PUT',
         headers: getAuthHeaders()
       });
@@ -250,7 +252,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   
   submitMilestone: async (taskId, milestoneId, url, note) => {
     try {
-      const response = await fetch(`/api/tasks/${taskId}/milestones/${milestoneId}/submit`, {
+      const response = await fetch(`${API_BASE}/api/tasks/${taskId}/milestones/${milestoneId}/submit`, {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify({ submissionUrl: url, submissionNote: note })
@@ -275,7 +277,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   
   approveMilestone: async (taskId, milestoneId) => {
     try {
-      const response = await fetch(`/api/tasks/${taskId}/milestones/${milestoneId}/approve`, {
+      const response = await fetch(`${API_BASE}/api/tasks/${taskId}/milestones/${milestoneId}/approve`, {
         method: 'PUT',
         headers: getAuthHeaders()
       });
@@ -306,7 +308,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   
   requestRevision: async (taskId, milestoneId) => {
     try {
-      const response = await fetch(`/api/tasks/${taskId}/milestones/${milestoneId}/revision`, {
+      const response = await fetch(`${API_BASE}/api/tasks/${taskId}/milestones/${milestoneId}/revision`, {
         method: 'PUT',
         headers: getAuthHeaders()
       });
@@ -330,7 +332,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   fetchProofCards: async () => {
     try {
-      const response = await fetch('/api/proof', {
+      const response = await fetch(`${API_BASE}/api/proof`, {
         headers: getAuthHeaders()
       });
       if (response.ok) {
@@ -370,7 +372,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
       const userRole = get().user?.role;
       if (userRole === 'admin') {
-        const response = await fetch('/api/auth/users', { headers: getAuthHeaders() });
+        const response = await fetch(`${API_BASE}/api/auth/users`, { headers: getAuthHeaders() });
         if (response.ok) {
           const users = await response.json();
           set({ allUsers: users });
@@ -389,7 +391,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       const fetchedUsers: User[] = [];
       for (const id of Array.from(userIds)) {
         try {
-          const response = await fetch(`/api/auth/users/${id}`, { headers: getAuthHeaders() });
+          const response = await fetch(`${API_BASE}/api/auth/users/${id}`, { headers: getAuthHeaders() });
           if (response.ok) {
             const userDetail = await response.json();
             fetchedUsers.push(userDetail);
