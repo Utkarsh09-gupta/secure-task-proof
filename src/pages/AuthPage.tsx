@@ -16,9 +16,9 @@ const AuthPage = () => {
   const navigate = useNavigate();
   const login = useAppStore((state) => state.login);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    login(
+    const success = await login(
       email, 
       password, 
       role, 
@@ -27,12 +27,14 @@ const AuthPage = () => {
       role === 'client' ? selectedClientType : undefined
     );
     
-    if (role === 'client') {
-      navigate('/dashboard/client');
-    } else if (role === 'admin') {
-      navigate('/admin');
-    } else {
-      navigate('/dashboard');
+    if (success) {
+      if (role === 'client') {
+        navigate('/dashboard/client');
+      } else if (role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/dashboard');
+      }
     }
   };
 

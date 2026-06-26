@@ -1,265 +1,350 @@
 import { create } from 'zustand';
 import { User, Task, ProofCard, UserRole, ServiceCategory, ClientType } from './types';
+import { toast } from 'sonner';
 
 interface AppState {
   user: User | null;
   tasks: Task[];
   proofCards: ProofCard[];
   allUsers: User[];
+  isLoading: boolean;
   
   setUser: (user: User | null) => void;
-  login: (email: string, password: string, role: UserRole, name?: string, serviceCategories?: ServiceCategory[], clientType?: ClientType) => void;
+  checkAuth: () => Promise<void>;
+  login: (email: string, password: string, role: UserRole, name?: string, serviceCategories?: ServiceCategory[], clientType?: ClientType) => Promise<boolean>;
   logout: () => void;
   
-  addTask: (task: Task) => void;
-  updateTask: (taskId: string, updates: Partial<Task>) => void;
-  acceptTask: (taskId: string, assigneeId: string) => void;
-  submitMilestone: (taskId: string, milestoneId: string, url: string, note: string) => void;
-  approveMilestone: (taskId: string, milestoneId: string) => void;
-  requestRevision: (taskId: string, milestoneId: string) => void;
+  fetchTasks: () => Promise<void>;
+  addTask: (task: Omit<Task, 'id' | 'clientId' | 'status' | 'paymentStatus' | 'createdAt' | 'contractLocked'>) => Promise<void>;
+  updateTask: (taskId: string, updates: Partial<Task>) => Promise<void>;
+  acceptTask: (taskId: string, assigneeId: string) => Promise<void>;
+  submitMilestone: (taskId: string, milestoneId: string, url: string, note: string) => Promise<void>;
+  approveMilestone: (taskId: string, milestoneId: string) => Promise<void>;
+  requestRevision: (taskId: string, milestoneId: string) => Promise<void>;
   
+  fetchProofCards: () => Promise<void>;
   addProofCard: (proofCard: ProofCard) => void;
   getProofCardsForUser: (userId: string) => ProofCard[];
+  fetchAllUsers: () => Promise<void>;
 }
 
-// Demo users - professional freelancers and clients
-const demoUsers: User[] = [
-  { 
-    id: 'client-001', 
-    name: 'Sarah Mitchell', 
-    email: 'sarah@techstartup.com', 
-    role: 'client', 
-    clientType: 'startup-founder',
-    completedTasks: 12, 
-    paymentBehavior: 'on-time' 
-  },
-  { 
-    id: 'client-002', 
-    name: 'Raj Kapoor', 
-    email: 'raj@digitalagency.com', 
-    role: 'client', 
-    clientType: 'agency-owner',
-    completedTasks: 28, 
-    paymentBehavior: 'on-time' 
-  },
-  { 
-    id: 'client-003', 
-    name: 'Emily Chen', 
-    email: 'emily@growthco.com', 
-    role: 'client', 
-    clientType: 'marketing-manager',
-    completedTasks: 8, 
-    paymentBehavior: 'delayed' 
-  },
-  { 
-    id: 'freelancer-001', 
-    name: 'Alex Chen', 
-    email: 'alex@email.com', 
-    role: 'freelancer', 
-    serviceCategories: ['frontend-developer', 'ui-ux-designer'],
-    skills: ['React', 'TypeScript', 'Figma', 'Tailwind CSS'] 
-  },
-  { 
-    id: 'freelancer-002', 
-    name: 'Priya Sharma', 
-    email: 'priya@email.com', 
-    role: 'freelancer', 
-    serviceCategories: ['video-editor', 'reel-editor'],
-    skills: ['Premiere Pro', 'After Effects', 'DaVinci Resolve'] 
-  },
-  { 
-    id: 'freelancer-003', 
-    name: 'Marcus Johnson', 
-    email: 'marcus@email.com', 
-    role: 'freelancer', 
-    serviceCategories: ['fullstack-developer', 'backend-developer'],
-    skills: ['Node.js', 'Python', 'PostgreSQL', 'AWS'] 
-  },
-];
-
-// Demo task
-const demoTask: Task = {
-  id: 'task-001',
-  title: 'E-commerce Dashboard Design',
-  description: 'Design and develop a modern dashboard for an e-commerce platform with analytics, order management, and customer insights.',
-  totalAmount: 15000,
-  clientId: 'client-001',
-  assigneeId: 'freelancer-001',
-  assigneeRole: 'freelancer',
-  status: 'in_progress',
-  paymentStatus: 'pending',
-  createdAt: new Date(),
-  contractLocked: true,
-  milestones: [
-    {
-      id: 'ms-001',
-      title: 'UI/UX Wireframes',
-      amount: 5000,
-      status: 'approved',
-      revisionCount: 0,
-      submissionUrl: 'https://figma.com/wireframes',
-      submissionNote: 'Complete wireframes for all 8 screens',
-      deliverables: [
-        { id: 'd1', title: 'Dashboard wireframe', completed: true },
-        { id: 'd2', title: 'Orders page wireframe', completed: true },
-        { id: 'd3', title: 'Analytics wireframe', completed: true },
-      ],
-    },
-    {
-      id: 'ms-002',
-      title: 'High-Fidelity Designs',
-      amount: 5000,
-      status: 'in_progress',
-      revisionCount: 0,
-      deliverables: [
-        { id: 'd4', title: 'Final dashboard design', completed: false },
-        { id: 'd5', title: 'Design system documentation', completed: false },
-      ],
-    },
-    {
-      id: 'ms-003',
-      title: 'React Implementation',
-      amount: 5000,
-      status: 'pending',
-      revisionCount: 0,
-      deliverables: [
-        { id: 'd6', title: 'Working React components', completed: false },
-        { id: 'd7', title: 'Responsive implementation', completed: false },
-      ],
-    },
-  ],
-};
-
-// Demo proof card
-const demoProofCard: ProofCard = {
-  id: 'proof-001',
-  taskId: 'task-001',
-  taskTitle: 'E-commerce Dashboard Design',
-  milestoneTitle: 'UI/UX Wireframes',
-  userRole: 'freelancer',
-  workSummary: 'Designed comprehensive wireframes for 8 dashboard screens including analytics, order management, and customer insights.',
-  evidenceUrl: 'https://figma.com/wireframes',
-  clientApproval: true,
-  clientName: 'Sarah Mitchell',
-  timestamp: new Date(),
-  verified: true,
-  publicLink: 'https://nexa.app/proof/abc123',
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('nexa_token');
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+  };
 };
 
 export const useAppStore = create<AppState>((set, get) => ({
   user: null,
-  tasks: [demoTask],
-  proofCards: [demoProofCard],
-  allUsers: demoUsers,
+  tasks: [],
+  proofCards: [],
+  allUsers: [],
+  isLoading: false,
   
   setUser: (user) => set({ user }),
-  
-  login: (email, password, role, name, serviceCategories, clientType) => {
-    const existingUser = demoUsers.find(u => u.role === role);
-    const user: User = {
-      id: existingUser?.id || `${role}-${Date.now()}`,
-      name: name || existingUser?.name || 'Demo User',
-      email,
-      role,
-      serviceCategories: role === 'freelancer' 
-        ? (serviceCategories || existingUser?.serviceCategories || ['frontend-developer']) 
-        : undefined,
-      skills: role === 'freelancer' 
-        ? (existingUser?.skills || ['React', 'TypeScript']) 
-        : undefined,
-      clientType: role === 'client' 
-        ? (clientType || existingUser?.clientType || 'individual-client') 
-        : undefined,
-      completedTasks: role === 'client' ? 12 : undefined,
-      paymentBehavior: role === 'client' ? 'on-time' : undefined,
-    };
-    set({ user });
-  },
-  
-  logout: () => set({ user: null }),
-  
-  addTask: (task) => set((state) => ({ tasks: [...state.tasks, task] })),
-  
-  updateTask: (taskId, updates) => set((state) => ({
-    tasks: state.tasks.map((t) => t.id === taskId ? { ...t, ...updates } : t),
-  })),
-  
-  acceptTask: (taskId, assigneeId) => set((state) => ({
-    tasks: state.tasks.map((t) => 
-      t.id === taskId 
-        ? { ...t, assigneeId, assigneeRole: 'freelancer' as const, status: 'accepted' as const, contractLocked: true }
-        : t
-    ),
-  })),
-  
-  submitMilestone: (taskId, milestoneId, url, note) => set((state) => ({
-    tasks: state.tasks.map((t) => 
-      t.id === taskId 
-        ? {
-            ...t,
-            milestones: t.milestones.map((m) =>
-              m.id === milestoneId
-                ? { ...m, status: 'submitted' as const, submissionUrl: url, submissionNote: note }
-                : m
-            ),
-          }
-        : t
-    ),
-  })),
-  
-  approveMilestone: (taskId, milestoneId) => {
-    const state = get();
-    const task = state.tasks.find(t => t.id === taskId);
-    const milestone = task?.milestones.find(m => m.id === milestoneId);
-    
-    if (task && milestone) {
-      const proofCard: ProofCard = {
-        id: `proof-${Date.now()}`,
-        taskId,
-        taskTitle: task.title,
-        milestoneTitle: milestone.title,
-        userRole: 'freelancer',
-        workSummary: milestone.submissionNote || 'Work completed successfully',
-        evidenceUrl: milestone.submissionUrl || '',
-        clientApproval: true,
-        clientName: state.allUsers.find(u => u.id === task.clientId)?.name || 'Client',
-        timestamp: new Date(),
-        verified: true,
-        publicLink: `https://nexa.app/proof/${Date.now().toString(36)}`,
-      };
-      
-      set((state) => ({
-        tasks: state.tasks.map((t) => 
-          t.id === taskId 
-            ? {
-                ...t,
-                milestones: t.milestones.map((m) =>
-                  m.id === milestoneId
-                    ? { ...m, status: 'approved' as const }
-                    : m
-                ),
-              }
-            : t
-        ),
-        proofCards: [...state.proofCards, proofCard],
-      }));
+
+  checkAuth: async () => {
+    const token = localStorage.getItem('nexa_token');
+    if (!token) return;
+
+    set({ isLoading: true });
+    try {
+      const response = await fetch('/api/auth/me', {
+        headers: getAuthHeaders()
+      });
+      if (response.ok) {
+        const user = await response.json();
+        set({ user });
+        // Fetch database data
+        await get().fetchTasks();
+        await get().fetchProofCards();
+        await get().fetchAllUsers();
+      } else {
+        // Token expired or invalid
+        localStorage.removeItem('nexa_token');
+        set({ user: null });
+      }
+    } catch (error) {
+      console.error('Check auth error:', error);
+    } finally {
+      set({ isLoading: false });
     }
   },
   
-  requestRevision: (taskId, milestoneId) => set((state) => ({
-    tasks: state.tasks.map((t) => 
-      t.id === taskId 
-        ? {
-            ...t,
-            milestones: t.milestones.map((m) =>
-              m.id === milestoneId
-                ? { ...m, status: 'revision_requested' as const, revisionCount: m.revisionCount + 1 }
-                : m
-            ),
-          }
-        : t
-    ),
-  })),
+  login: async (email, password, role, name, serviceCategories, clientType) => {
+    set({ isLoading: true });
+    try {
+      let response;
+      const isSignup = !!name;
+
+      if (isSignup) {
+        // Derive some default skills from service categories if not explicitly set
+        const defaultSkillsMap: Record<ServiceCategory, string[]> = {
+          'frontend-developer': ['React', 'TypeScript', 'Tailwind CSS'],
+          'backend-developer': ['Node.js', 'Express', 'SQL'],
+          'fullstack-developer': ['React', 'Node.js', 'TypeScript', 'SQL'],
+          'android-developer': ['Kotlin', 'Android SDK'],
+          'ios-developer': ['Swift', 'iOS SDK'],
+          'cross-platform-developer': ['Flutter', 'React Native'],
+          'graphic-designer': ['Photoshop', 'Illustrator'],
+          'poster-banner-designer': ['Photoshop', 'Canva'],
+          'ui-ux-designer': ['Figma', 'Adobe XD'],
+          'video-editor': ['Premiere Pro', 'After Effects'],
+          'photo-editor': ['Lightroom', 'Photoshop'],
+          'reel-editor': ['CapCut', 'Premiere Pro'],
+          'content-writer': ['Copywriting', 'SEO'],
+          'technical-writer': ['Markdown', 'API Documentation'],
+          'resume-writer': ['Resume Writing', 'LinkedIn Optimization'],
+          'assignment-helper': ['Academic Writing', 'Research'],
+          'ppt-maker': ['PowerPoint', 'Keynote'],
+          'research-assistant': ['Literature Review', 'Data Analysis']
+        };
+
+        const derivedSkills = serviceCategories && serviceCategories.length > 0 
+          ? Array.from(new Set(serviceCategories.flatMap(cat => defaultSkillsMap[cat] || [])))
+          : ['React', 'TypeScript'];
+
+        response = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email,
+            password,
+            role,
+            name,
+            serviceCategories,
+            clientType,
+            skills: derivedSkills
+          })
+        });
+      } else {
+        response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+      }
+
+      const data = await response.json();
+      if (!response.ok) {
+        toast.error(data.error || 'Authentication failed');
+        return false;
+      }
+
+      localStorage.setItem('nexa_token', data.token);
+      set({ user: data.user });
+      
+      toast.success(isSignup ? 'Account created successfully!' : 'Logged in successfully!');
+      
+      // Load initial data
+      await get().fetchTasks();
+      await get().fetchProofCards();
+      await get().fetchAllUsers();
+      
+      return true;
+    } catch (error) {
+      console.error('Login error:', error);
+      toast.error('Network connection error');
+      return false;
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+  
+  logout: () => {
+    localStorage.removeItem('nexa_token');
+    set({ user: null, tasks: [], proofCards: [], allUsers: [] });
+    toast.success('Logged out successfully');
+  },
+
+  fetchTasks: async () => {
+    try {
+      const response = await fetch('/api/tasks', {
+        headers: getAuthHeaders()
+      });
+      if (response.ok) {
+        const tasks = await response.json();
+        // Parse database dates
+        const formattedTasks = tasks.map((t: any) => ({
+          ...t,
+          createdAt: new Date(t.createdAt)
+        }));
+        set({ tasks: formattedTasks });
+      }
+    } catch (error) {
+      console.error('Fetch tasks error:', error);
+    }
+  },
+  
+  addTask: async (taskData) => {
+    try {
+      const response = await fetch('/api/tasks', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(taskData)
+      });
+      
+      if (response.ok) {
+        const newTask = await response.json();
+        newTask.createdAt = new Date(newTask.createdAt);
+        set((state) => ({ tasks: [...state.tasks, newTask] }));
+        toast.success('Task created successfully!');
+      } else {
+        const data = await response.json();
+        toast.error(data.error || 'Failed to create task');
+      }
+    } catch (error) {
+      console.error('Add task error:', error);
+      toast.error('Network error creating task');
+    }
+  },
+  
+  updateTask: async (taskId, updates) => {
+    try {
+      const response = await fetch(`/api/tasks/${taskId}`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(updates)
+      });
+      
+      if (response.ok) {
+        const updatedTask = await response.json();
+        updatedTask.createdAt = new Date(updatedTask.createdAt);
+        set((state) => ({
+          tasks: state.tasks.map((t) => t.id === taskId ? updatedTask : t)
+        }));
+      } else {
+        const data = await response.json();
+        toast.error(data.error || 'Failed to update task');
+      }
+    } catch (error) {
+      console.error('Update task error:', error);
+    }
+  },
+  
+  acceptTask: async (taskId, assigneeId) => {
+    try {
+      const response = await fetch(`/api/tasks/${taskId}/accept`, {
+        method: 'PUT',
+        headers: getAuthHeaders()
+      });
+      
+      if (response.ok) {
+        const updatedTask = await response.json();
+        updatedTask.createdAt = new Date(updatedTask.createdAt);
+        set((state) => ({
+          tasks: state.tasks.map((t) => t.id === taskId ? updatedTask : t)
+        }));
+        toast.success('Task accepted successfully!');
+      } else {
+        const data = await response.json();
+        toast.error(data.error || 'Failed to accept task');
+      }
+    } catch (error) {
+      console.error('Accept task error:', error);
+      toast.error('Network error accepting task');
+    }
+  },
+  
+  submitMilestone: async (taskId, milestoneId, url, note) => {
+    try {
+      const response = await fetch(`/api/tasks/${taskId}/milestones/${milestoneId}/submit`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ submissionUrl: url, submissionNote: note })
+      });
+      
+      if (response.ok) {
+        const updatedTask = await response.json();
+        updatedTask.createdAt = new Date(updatedTask.createdAt);
+        set((state) => ({
+          tasks: state.tasks.map((t) => t.id === taskId ? updatedTask : t)
+        }));
+        toast.success('Milestone submitted successfully!');
+      } else {
+        const data = await response.json();
+        toast.error(data.error || 'Failed to submit milestone');
+      }
+    } catch (error) {
+      console.error('Submit milestone error:', error);
+      toast.error('Network error submitting milestone');
+    }
+  },
+  
+  approveMilestone: async (taskId, milestoneId) => {
+    try {
+      const response = await fetch(`/api/tasks/${taskId}/milestones/${milestoneId}/approve`, {
+        method: 'PUT',
+        headers: getAuthHeaders()
+      });
+      
+      if (response.ok) {
+        const updatedTask = await response.json();
+        updatedTask.createdAt = new Date(updatedTask.createdAt);
+        
+        set((state) => ({
+          tasks: state.tasks.map((t) => t.id === taskId ? updatedTask : t)
+        }));
+        
+        toast.success('Milestone approved and Proof Card generated!');
+        
+        // Refresh proof cards list
+        await get().fetchProofCards();
+        // Refresh user details (since completedTasks may have incremented)
+        await get().checkAuth();
+      } else {
+        const data = await response.json();
+        toast.error(data.error || 'Failed to approve milestone');
+      }
+    } catch (error) {
+      console.error('Approve milestone error:', error);
+      toast.error('Network error approving milestone');
+    }
+  },
+  
+  requestRevision: async (taskId, milestoneId) => {
+    try {
+      const response = await fetch(`/api/tasks/${taskId}/milestones/${milestoneId}/revision`, {
+        method: 'PUT',
+        headers: getAuthHeaders()
+      });
+      
+      if (response.ok) {
+        const updatedTask = await response.json();
+        updatedTask.createdAt = new Date(updatedTask.createdAt);
+        set((state) => ({
+          tasks: state.tasks.map((t) => t.id === taskId ? updatedTask : t)
+        }));
+        toast.success('Revision requested successfully.');
+      } else {
+        const data = await response.json();
+        toast.error(data.error || 'Failed to request revision');
+      }
+    } catch (error) {
+      console.error('Request revision error:', error);
+      toast.error('Network error requesting revision');
+    }
+  },
+
+  fetchProofCards: async () => {
+    try {
+      const response = await fetch('/api/proof', {
+        headers: getAuthHeaders()
+      });
+      if (response.ok) {
+        const proofs = await response.json();
+        const formattedProofs = proofs.map((p: any) => ({
+          ...p,
+          timestamp: new Date(p.timestamp)
+        }));
+        set({ proofCards: formattedProofs });
+      }
+    } catch (error) {
+      console.error('Fetch proof cards error:', error);
+    }
+  },
   
   addProofCard: (proofCard) => set((state) => ({ 
     proofCards: [...state.proofCards, proofCard] 
@@ -272,4 +357,51 @@ export const useAppStore = create<AppState>((set, get) => ({
       return task?.assigneeId === userId;
     });
   },
+
+  fetchAllUsers: async () => {
+    try {
+      // Non-admins can't fetch all users directly from admin endpoint,
+      // but we need assignee details on dashboard.
+      // So we can fallback gracefully or handle user by user.
+      // Let's call the users endpoint. If it's a freelancer/client they won't have admin access,
+      // so we can fallback to fetching individual profiles of users involved in tasks.
+      const token = localStorage.getItem('nexa_token');
+      if (!token) return;
+
+      const userRole = get().user?.role;
+      if (userRole === 'admin') {
+        const response = await fetch('/api/auth/users', { headers: getAuthHeaders() });
+        if (response.ok) {
+          const users = await response.json();
+          set({ allUsers: users });
+          return;
+        }
+      }
+
+      // If client/freelancer, get users referenced in tasks
+      const tasks = get().tasks;
+      const userIds = new Set<string>();
+      tasks.forEach(t => {
+        if (t.clientId) userIds.add(t.clientId);
+        if (t.assigneeId) userIds.add(t.assigneeId);
+      });
+
+      const fetchedUsers: User[] = [];
+      for (const id of Array.from(userIds)) {
+        try {
+          const response = await fetch(`/api/auth/users/${id}`, { headers: getAuthHeaders() });
+          if (response.ok) {
+            const userDetail = await response.json();
+            fetchedUsers.push(userDetail);
+          }
+        } catch (e) {
+          console.error(`Error fetching user ${id}:`, e);
+        }
+      }
+
+      set({ allUsers: fetchedUsers });
+    } catch (error) {
+      console.error('Fetch all users error:', error);
+    }
+  }
 }));

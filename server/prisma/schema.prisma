@@ -1,0 +1,78 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                String   @id @default(uuid())
+  name              String
+  email             String   @unique
+  passwordHash      String
+  role              String   // 'client' | 'freelancer' | 'admin'
+  skills            String?  // Comma-separated list or JSON string of skills
+  serviceCategories String?  // Comma-separated list or JSON string of categories
+  clientType        String?  // 'startup-founder' | 'small-business-owner' etc.
+  completedTasks    Int      @default(0)
+  paymentBehavior   String?  // 'on-time' | 'delayed'
+  
+  // Relations
+  tasksAsClient     Task[]   @relation("ClientTasks")
+  tasksAsAssignee   Task[]   @relation("AssigneeTasks")
+}
+
+model Task {
+  id             String      @id @default(uuid())
+  title          String
+  description    String
+  totalAmount    Float
+  clientId       String
+  client         User        @relation("ClientTasks", fields: [clientId], references: [id], onDelete: Cascade)
+  assigneeId     String?
+  assignee       User?       @relation("AssigneeTasks", fields: [assigneeId], references: [id])
+  assigneeRole   String?     // 'freelancer'
+  status         String      // 'draft' | 'posted' | 'accepted' | 'in_progress' | 'completed'
+  paymentStatus  String      // 'pending' | 'paid'
+  createdAt      DateTime    @default(now())
+  contractLocked Boolean     @default(false)
+  milestones     Milestone[]
+}
+
+model Milestone {
+  id             String        @id @default(uuid())
+  title          String
+  amount         Float
+  status         String        // 'pending' | 'in_progress' | 'submitted' | 'approved' | 'revision_requested'
+  revisionCount  Int           @default(0)
+  submissionUrl  String?
+  submissionNote String?
+  taskId         String
+  task           Task          @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  deliverables   Deliverable[]
+}
+
+model Deliverable {
+  id          String    @id @default(uuid())
+  title       String
+  completed   Boolean   @default(false)
+  milestoneId String
+  milestone   Milestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+}
+
+model ProofCard {
+  id               String   @id @default(uuid())
+  taskId           String
+  taskTitle        String
+  milestoneTitle   String
+  userRole         String   // 'freelancer'
+  workSummary      String
+  evidenceUrl      String
+  clientApproval   Boolean  @default(true)
+  clientName       String
+  timestamp        DateTime @default(now())
+  verified         Boolean  @default(true)
+  publicLink       String
+}

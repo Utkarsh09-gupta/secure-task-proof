@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -25,76 +26,84 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/auth" element={<AuthPage />} />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <FreelancerDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/client"
-            element={
-              <ProtectedRoute>
-                <ClientDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/task/:taskId"
-            element={
-              <ProtectedRoute>
-                <TaskDetail />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/task/:taskId/review"
-            element={
-              <ProtectedRoute>
-                <TaskReview />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/proof-wallet"
-            element={
-              <ProtectedRoute>
-                <ProofWallet />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute>
-                <AdminDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  const checkAuth = useAppStore((state) => state.checkAuth);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/auth" element={<AuthPage />} />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <FreelancerDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/client"
+              element={
+                <ProtectedRoute>
+                  <ClientDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/task/:taskId"
+              element={
+                <ProtectedRoute>
+                  <TaskDetail />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/task/:taskId/review"
+              element={
+                <ProtectedRoute>
+                  <TaskReview />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/proof-wallet"
+              element={
+                <ProtectedRoute>
+                  <ProofWallet />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
