@@ -1,73 +1,131 @@
-# Welcome to your Lovable project
+# Nexa: Secure Task Proof Platform
 
-## Project info
+Nexa is a full-stack, milestone-based task collaboration platform that allows freelancers and clients to securely collaborate and automatically generate **cryptographically verifiable Proof Cards** for completed work. Freelancers can build a portable, client-verified reputation in their **Proof Wallet** that they can share with potential clients.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+---
 
-## How can I edit this code?
+## 🚀 Key Advantages for Freelancers
 
-There are several ways of editing your application.
+1. **Verifiable Proof of Work (No More "Trust Me")**
+   Every completed milestone generates a verified **Proof Card** in the freelancer's wallet. It includes the client's name, task details, milestone title, and a direct URL to the evidence of work (designs, repository, documents). Clients sign off on this, making it impossible to fake.
+2. **Portable Reputation**
+   Freelancers get a public **Proof Wallet** showcasing their complete history of verified achievements. They can share this link on LinkedIn, resumes, or portfolios to prove their skill set.
+3. **Milestone Security & Dispute Protection**
+   Tasks are broken down into locked milestones. Freelancers can submit deliverables step-by-step, request revisions, and receive payment confirmation, protecting them from scope creep and non-payment.
+4. **Context-Based Profile Privacy**
+   Protects freelancer privacy by hiding contact details and credentials until a contract/task is accepted.
 
-**Use Lovable**
+---
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## 🛠️ Tech Stack
 
-Changes made via Lovable will be committed automatically to this repo.
+### Frontend (User Interface)
+* **Framework**: React 18 with TypeScript (compiled using Vite)
+* **State Management**: Zustand (persists JWT session tokens in localStorage)
+* **Styling**: Vanilla CSS for core layouts & responsive styles, Tailwind CSS for utilities
+* **Icons**: Lucide React
+* **Toasts & Feedback**: Sonner
 
-**Use your preferred IDE**
+### Backend (API Server)
+* **Runtime**: Node.js + Express with TypeScript
+* **ORM**: Prisma Client (Type-safe SQL builder)
+* **Database**: SQLite (`dev.db` database file)
+* **Security & Authentication**: JWT (JSON Web Tokens) and pre-hashed passwords using `bcryptjs`
+* **Concurrency**: Configured to run frontend and backend servers together locally under a single port configuration
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+---
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 📁 Project Architecture
 
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```bash
+├── server/                    # Node.js + Express Backend
+│   ├── prisma/
+│   │   ├── schema.prisma      # SQLite Database Models (User, Task, Milestone, Deliverable, ProofCard)
+│   │   ├── seed.ts            # Database seed script for default demo accounts
+│   │   └── dev.db             # SQLite local database file (ignored in git)
+│   ├── src/
+│   │   ├── index.ts           # App entry point, CORS settings & auto-seeding
+│   │   ├── middleware/
+│   │   │   └── auth.ts        # JWT token verification middleware
+│   │   └── routes/
+│   │       ├── auth.ts        # Signup, login, profile routes
+│   │       ├── tasks.ts       # Task creation, accept, milestone submission, and approval endpoints
+│   │       └── proof.ts       # Proof Wallet query endpoints
+│   ├── tsconfig.json
+│   └── package.json
+│
+├── src/                       # React Frontend
+│   ├── components/            # Layout and modal React components
+│   ├── lib/
+│   │   ├── store.ts           # Zustand global state & API integration action dispatchers
+│   │   └── types.ts           # Shared TypeScript definitions
+│   ├── pages/                 # Routing views (Dashboard, Auth, Profile, TaskDetail, TaskReview, ProofWallet)
+│   ├── App.tsx                # Client router, ProtectedRoute verification
+│   └── main.tsx
+│
+├── vercel.json                # Single Page Application (SPA) routing configuration
+└── package.json               # Root scripts to run concurrently
 ```
 
-**Edit a file directly in GitHub**
+---
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## ⚙️ Local Development Setup
 
-**Use GitHub Codespaces**
+### Prerequisite
+Ensure you have [Node.js](https://nodejs.org) installed on your system.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### 1. Install Dependencies
+Install all package dependencies in both the root directory and the backend server folder:
+```bash
+# Install frontend packages
+npm install
 
-## What technologies are used for this project?
+# Install backend packages
+cd server
+npm install
+cd ..
+```
 
-This project is built with:
+### 2. Prepare the Database
+Create the database tables and seed the demo data:
+```bash
+cd server
+# Generate Prisma Client
+npx prisma generate
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+# Run migrations to create SQLite database tables
+npx prisma migrate dev --name init
 
-## How can I deploy this project?
+# Seed database with initial users and tasks
+npx prisma db seed
+cd ..
+```
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+### 3. Run Development Servers
+Start both the React frontend and Node.js backend concurrently:
+```bash
+npm run dev
+```
+* **Frontend**: runs on [http://localhost:8080](http://localhost:8080)
+* **Backend**: runs on [http://localhost:5000](http://localhost:5000)
 
-## Can I connect a custom domain to my Lovable project?
+---
 
-Yes, you can!
+## 🌐 Production Deployment Guide
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### Step 1: Deploy Backend to Render (or Railway)
+1. Set **Root Directory** to `server`.
+2. Configure environment variables:
+   * `DATABASE_URL` = `file:./dev.db`
+   * `JWT_SECRET` = `any_random_string`
+   * `FRONTEND_URL` = `https://your-app.vercel.app` (or `*` to allow any origin)
+3. Set **Build Command**: `npm install && npm run build && npx prisma generate && npx prisma migrate deploy`
+4. Set **Start Command**: `npm run start`
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+### Step 2: Deploy Frontend to Vercel
+1. Import repository and set **Framework Preset** to Vite.
+2. Set **Root Directory** as default `/`.
+3. Configure environment variables:
+   * **Key**: `VITE_API_URL`
+   * **Value**: Your Render server URL (e.g. `https://your-backend.onrender.com`).
+4. Click **Deploy**. Vercel will automatically compile the code and apply the `vercel.json` SPA redirection rules.
