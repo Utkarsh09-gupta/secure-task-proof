@@ -22,9 +22,13 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (process.env.FRONTEND_URL === '*' || process.env.FRONTEND_URL === 'all') {
-      callback(null, true);
-    } else if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin || 
+        !process.env.FRONTEND_URL || 
+        process.env.FRONTEND_URL === '*' || 
+        process.env.FRONTEND_URL === 'all' || 
+        allowedOrigins.includes(origin) ||
+        origin.endsWith('.vercel.app')
+    ) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
