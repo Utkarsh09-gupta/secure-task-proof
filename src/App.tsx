@@ -20,9 +20,21 @@ const queryClient = new QueryClient();
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const user = useAppStore((state) => state.user);
+  const isLoading = useAppStore((state) => state.isLoading);
+  const token = localStorage.getItem('nexa_token');
+
+  if (isLoading || (token && !user)) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
   if (!user) {
     return <Navigate to="/auth" replace />;
   }
+
   return <>{children}</>;
 };
 
@@ -84,6 +96,14 @@ const App = () => {
             />
             <Route
               path="/profile"
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile/:userId"
               element={
                 <ProtectedRoute>
                   <Profile />

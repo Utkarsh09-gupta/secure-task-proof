@@ -81,7 +81,14 @@ const TaskDetail = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
               <p className="text-xs text-muted-foreground mb-1">Client</p>
-              <p className="font-semibold text-foreground">{client?.name || 'Unknown'}</p>
+              <Link to={`/profile/${client?.id}`} className="font-semibold text-primary hover:underline block">
+                {client?.name || 'Unknown'}
+              </Link>
+              {client?.email && (
+                <a href={`mailto:${client.email}`} className="text-xs text-muted-foreground hover:text-primary block mt-0.5">
+                  {client.email}
+                </a>
+              )}
             </div>
             <div>
               <p className="text-xs text-muted-foreground mb-1">Total Amount</p>

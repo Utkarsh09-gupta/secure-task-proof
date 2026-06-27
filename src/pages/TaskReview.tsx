@@ -8,7 +8,8 @@ import {
   IndianRupee,
   ExternalLink,
   AlertTriangle,
-  User
+  User,
+  Mail
 } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
 import DashboardLayout from '@/components/DashboardLayout';
@@ -94,7 +95,15 @@ const TaskReview = () => {
                     Verified on Nexa
                   </span>
                 </div>
-                <p className="text-sm text-muted-foreground capitalize">{assignee.role}</p>
+                <div className="flex items-center gap-4 text-sm text-muted-foreground mt-0.5">
+                  <span className="capitalize">{assignee.role}</span>
+                  {assignee.email && (
+                    <a href={`mailto:${assignee.email}`} className="text-xs text-primary hover:underline flex items-center gap-1">
+                      <Mail className="w-3.5 h-3.5" />
+                      {assignee.email}
+                    </a>
+                  )}
+                </div>
               </div>
               <Link
                 to={`/profile/${assignee.id}`}
