@@ -47,7 +47,7 @@ app.use('/api/proof', proofRouter);
 
 // Basic health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({ status: 'ok', version: '1.0.3-upsert-seeding', timestamp: new Date().toISOString() });
 });
 
 // Global Error Handler
